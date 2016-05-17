@@ -1,44 +1,56 @@
 ﻿using System;
+using GameBoy.CPU;
+using GameBoy.Graphics;
+using GameBoy.Input;
+using GameBoy.IO;
+using GameBoy.Memory;
+using GameBoy.Sound;
 
-namespace gameboy
+namespace GameBoy
 {
 	public class GameBoy
 	{
-		private Random random = new Random ();
+		//private Random random = new Random ();
 		private bool stopped = false;
 
-		public Display Display { get; set; }
+		public Gpu Gpu { get; set; }
 
-		public CPU Cpu { get; set; }
+		public Cpu Cpu { get; set; }
 
-		public Memory Memory { get; set; }
+		public Ram Memory { get; set; }
 
-		public Input Input { get; set; }
+		public InputHandler Input { get; set; }
 
-		public Sound Sound { get; set; }
+		public SoundHandler Sound { get; set; }
+
+		public bool Running { get; set; }
 
 		public GameBoy (string filename)
 		{
 			var rom = new Rom (filename);
-			Memory = new Memory (rom);
-			Cpu = new CPU (Memory);
+			Memory = new Ram (rom);
+			Cpu = new Cpu (Memory);
 		}
 
 		public void Start ()
 		{
 			Reset ();
 
-			while (!stopped) {
+			while (Running) {
 				Cpu.Step ();
-				//Display.Step ();
-				//Cpu.Interrupt ();
+				Gpu.Step (Cpu);
+				Cpu.Interrupt.Step ();
 			}
-
-			Display.Dispose ();
 		}
 
 		public void Reset ()
 		{
+			Memory.Reset ();
+			Cpu.Reset ();
+			Input.Reset ();
+			Gpu.Reset ();
+
+			Running = true;
 		}
 	}
 }

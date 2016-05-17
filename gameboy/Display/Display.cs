@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace gameboy
+namespace GameBoy.Graphics
 {
 	public class Display : IDisposable
 	{

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace gameboy
+namespace GameBoy.IO
 {
 	public delegate void LoadedEventHandler (object sender, EventArgs e);
 
@@ -48,6 +48,7 @@ namespace gameboy
 				if (stream.Length < 0x180) {
 					Console.WriteLine ("ROM is too small!");
 					OnLoaded (false, new EventArgs ());
+					return;
 				}
 				stream.Position = 0;
 
@@ -70,11 +71,13 @@ namespace gameboy
 				} else {
 					Console.WriteLine ("ERROR: Unknown ROM type: {0}", Type.ToString ());
 					OnLoaded (false, new EventArgs ());
+					return;
 				}
 				Console.WriteLine ("ROM type: {0}", Type.ToString ());
 				if (Type != RomType.Plain) {
-					Console.WriteLine ("Only 32KB games with no mappers are supported!");
+					Console.WriteLine ("ERROR: Only 32KB games with no mappers are supported!");
 					OnLoaded (false, new EventArgs ());
+					return;
 				}
 
 				RomSize = header [RomOffsets.ROM_SIZE];
@@ -86,10 +89,12 @@ namespace gameboy
 				Console.WriteLine ("ROM size: {0}KB", RomSize * 16);
 
 				if (RomSize * 16 != 32) {
-					Console.WriteLine ("Only 32KB games with no mappers are supported!");
+					Console.WriteLine ("ERROR: Only 32KB games with no mappers are supported!");
 					OnLoaded (false, new EventArgs ());
 				} else if (stream.Length != RomSize * 16 * 1024) {
-					Console.WriteLine ("ROM filesize does not equal ROM size!");
+					Console.WriteLine ("ERROR: ROM filesize does not equal ROM size!");
+					OnLoaded (false, new EventArgs ());
+					return;
 				}
 
 				RamSize = header [RomOffsets.RAM_SIZE];

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace gameboy
+namespace GameBoy.IO
 {
 	public static class RomOffsets
 	{

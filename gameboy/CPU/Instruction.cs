@@ -1,70 +1,33 @@
 ﻿using System;
+using GameBoy.Memory;
 
-namespace gameboy
+namespace GameBoy.CPU
 {
-	public delegate void Handler ();
-	public delegate void ByteHandler (byte value);
-	public delegate void UShortHandler (ushort value);
-
 	public class Instruction
 	{
-		public string Disassembly { get; set; }
+		public string Disassembly { get; protected set; }
 
-		public byte Cycles { get; private set; }
+		public byte Cycles { get; protected set; }
 
-		public byte Ticks { get; private set; }
+		public byte Ticks { get; protected set; }
 
-		public byte Operands { get; set; }
+		public byte Operands { get; protected set; }
 
-		public Handler Handler0 { get; set; }
-
-		public ByteHandler Handler1 { get; set; }
-
-		public UShortHandler Handler2 { get; set; }
+		public Action Handler { get; set; }
 
 		#region Constructors
 
-		public Instruction (string disassembly, byte ticks) : this (disassembly, ticks, 0, NOP)
-		{
-		}
-
-		public Instruction (string disassembly, byte ticks, Handler handler) : this (disassembly, ticks, 0, handler)
-		{
-		}
-
-		public Instruction (string disassembly, byte ticks, ByteHandler handler) : this (disassembly, ticks, 1, handler)
-		{
-		}
-
-		public Instruction (string disassembly, byte ticks, UShortHandler handler) : this (disassembly, ticks, 2, handler)
-		{
-		}
-
-		private Instruction (string disassembly, byte ticks, byte operands, Handler handler)
+		public Instruction (string disassembly, byte ticks)
 		{
 			Disassembly = disassembly;
 			Ticks = ticks;
 			Cycles = (byte)(ticks << 1);
-			Operands = operands;
-			Handler0 = handler;
 		}
 
-		private Instruction (string disassembly, byte ticks, byte operands, ByteHandler handler)
+		public Instruction (string disassembly, byte ticks, Action handler) : this (disassembly, ticks)
 		{
-			Disassembly = disassembly;
-			Ticks = ticks;
-			Cycles = (byte)(ticks << 1);
-			Operands = operands;
-			Handler1 = handler;
-		}
-
-		private Instruction (string disassembly, byte ticks, byte operands, UShortHandler handler)
-		{
-			Disassembly = disassembly;
-			Ticks = ticks;
-			Cycles = (byte)(ticks << 1);
-			Operands = operands;
-			Handler2 = handler;
+			Operands = 0;
+			Handler = handler;
 		}
 
 		#endregion
@@ -81,7 +44,7 @@ namespace gameboy
 			// Complete
 		}
 
-		public static void Add (ref byte register, byte value, Memory memory)
+		public static void Add (ref byte register, byte value, Ram memory)
 		{
 			var result = (byte)(register + value);
 			if ((result & 0xffff0000) != 0)
@@ -99,7 +62,7 @@ namespace gameboy
 			memory.ClearFlag (Flag.Negative);
 		}
 
-		public static void Add (ref ushort register, ushort value, Memory memory)
+		public static void Add (ref ushort register, ushort value, Ram memory)
 		{
 			var result = (ushort)(register + value);
 			if ((result & 0xffff0000) != 0)
@@ -117,7 +80,7 @@ namespace gameboy
 			memory.ClearFlag (Flag.Negative);
 		}
 
-		public static void AddWithCarry (byte value, Memory memory)
+		public static void AddWithCarry (byte value, Ram memory)
 		{
 			value += (byte)(memory.IsFlagSet (Flag.Carry) ? 1 : 0);
 
@@ -143,7 +106,7 @@ namespace gameboy
 			memory.Registers.A = (byte)(result & 0xff);
 		}
 
-		public static void Subtract (byte value, Memory memory)
+		public static void Subtract (byte value, Ram memory)
 		{
 			memory.SetFlag (Flag.Negative);
 
@@ -165,7 +128,7 @@ namespace gameboy
 			memory.Registers.A -= value;
 		}
 
-		public static void SubtractWithCarry (byte value, Memory memory)
+		public static void SubtractWithCarry (byte value, Ram memory)
 		{
 			value += (byte)(memory.IsFlagSet (Flag.Carry) ? 1 : 0);
 
@@ -189,7 +152,7 @@ namespace gameboy
 			memory.Registers.A -= value;
 		}
 
-		public static void And (byte value, Memory memory)
+		public static void And (byte value, Ram memory)
 		{
 			memory.Registers.A &= value;
 
@@ -202,7 +165,7 @@ namespace gameboy
 			memory.SetFlag (Flag.HalfCarry);
 		}
 
-		public static void Or (byte value, Memory memory)
+		public static void Or (byte value, Ram memory)
 		{
 			memory.Registers.A |= value;
 
@@ -214,7 +177,7 @@ namespace gameboy
 			memory.ClearFlag (Flag.Carry | Flag.Negative | Flag.HalfCarry);
 		}
 
-		public static void ExclusiveOr (byte value, Memory memory)
+		public static void ExclusiveOr (byte value, Ram memory)
 		{
 			memory.Registers.A ^= value;
 
@@ -226,7 +189,7 @@ namespace gameboy
 			memory.ClearFlag (Flag.Carry | Flag.Negative | Flag.HalfCarry);
 		}
 
-		public static void Compare (byte value, Memory memory)
+		public static void Compare (byte value, Ram memory)
 		{
 			if (memory.Registers.A == value)
 				memory.SetFlag (Flag.Zero);
@@ -246,7 +209,7 @@ namespace gameboy
 			memory.SetFlag (Flag.Negative);
 		}
 
-		public static byte Increment (byte value, Memory memory)
+		public static byte Increment (byte value, Ram memory)
 		{
 			if ((value & 0x0f) == 0x0f)
 				memory.SetFlag (Flag.HalfCarry);
@@ -265,7 +228,7 @@ namespace gameboy
 			return value;
 		}
 
-		public static byte Decrement (byte value, Memory memory)
+		public static byte Decrement (byte value, Ram memory)
 		{
 			if ((value & 0x0f) != 0)
 				memory.ClearFlag (Flag.HalfCarry);
@@ -286,6 +249,29 @@ namespace gameboy
 
 		#endregion
 
+	}
+
+	public class Instruction<T> : Instruction
+	{
+		public new Action<T> Handler { get; set; }
+
+		#region Constructors
+
+		public Instruction (string disassembly, byte ticks, Action<T> handler) : base (disassembly, ticks)
+		{
+			if (typeof(byte).IsAssignableFrom(typeof(T))) {
+				Operands = 1;
+				Handler = handler;
+			} else if (typeof(ushort).IsAssignableFrom(typeof(T))) {
+				Operands = 2;
+				Handler = handler;
+			} else {
+				Operands = 0;
+				Handler = (T value) => Undefined ();
+			}
+		}
+
+		#endregion
 	}
 }
 

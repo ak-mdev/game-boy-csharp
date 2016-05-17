@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace gameboy
+namespace GameBoy.Memory
 {
 	[StructLayout(LayoutKind.Explicit, Pack=1)]
 	public class Register

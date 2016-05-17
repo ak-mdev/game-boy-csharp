@@ -17,8 +17,9 @@
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
     <PlatformTarget>x86</PlatformTarget>
+    <Externalconsole>true</Externalconsole>
+    <Commandlineparameters>tetris.gb</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>
@@ -44,19 +45,26 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
-    <Compile Include="CPU\CPU.cs" />
     <Compile Include="CPU\Instruction.cs" />
     <Compile Include="Memory\Register.cs" />
-    <Compile Include="Memory\Memory.cs" />
     <Compile Include="Memory\Flag.cs" />
     <Compile Include="GameBoy.cs" />
-    <Compile Include="Sound\Sound.cs" />
-    <Compile Include="Display\Display.cs" />
-    <Compile Include="Input\Input.cs" />
     <Compile Include="IO\Rom.cs" />
     <Compile Include="IO\RomType.cs" />
     <Compile Include="IO\RomOffsets.cs" />
     <Compile Include="CPU\InstructionSet.cs" />
+    <Compile Include="CPU\Interrupt.cs" />
+    <Compile Include="Input\Keys.cs" />
+    <Compile Include="Memory\Ram.cs" />
+    <Compile Include="CPU\Cpu.cs" />
+    <Compile Include="Input\InputHandler.cs" />
+    <Compile Include="Sound\SoundHandler.cs" />
+    <Compile Include="Display\Gpu.cs" />
+    <Compile Include="Display\GpuMode.cs" />
+    <Compile Include="Display\Display.cs" />
+    <Compile Include="Display\Sprite.cs" />
+    <Compile Include="Display\GpuControl.cs" />
+    <Compile Include="Display\Color.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="CPU\" />

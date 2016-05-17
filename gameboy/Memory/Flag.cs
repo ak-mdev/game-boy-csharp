@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace gameboy
+namespace GameBoy.Memory
 {
 	public enum Flag : byte
 	{
