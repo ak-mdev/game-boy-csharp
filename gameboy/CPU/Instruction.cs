@@ -34,9 +34,15 @@ namespace GameBoy.CPU
 
 		#region Base Instructions
 
-		public static void Undefined ()
+		public static void Undefined (Ram memory)
 		{
-			Console.WriteLine ("Command not yet implemented");
+			memory.Registers.PC--;
+
+			var instruction = memory.ReadByte(memory.Registers.PC);
+
+			Console.WriteLine("Undefined instruction {0}!\n\nCheck stdout for more details.", instruction.ToString("X"));
+
+			Program.Quit ();
 		}
 
 		public static void NOP ()
@@ -249,6 +255,13 @@ namespace GameBoy.CPU
 
 		#endregion
 
+		#region CB instructions
+		public static void CB (byte instruction)
+		{
+			
+		}
+		#endregion
+
 	}
 
 	public class Instruction<T> : Instruction
@@ -267,7 +280,7 @@ namespace GameBoy.CPU
 				Handler = handler;
 			} else {
 				Operands = 0;
-				Handler = (T value) => Undefined ();
+				Handler = (T value) => NOP ();
 			}
 		}
 

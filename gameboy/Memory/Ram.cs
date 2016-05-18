@@ -1,10 +1,18 @@
 ﻿using System;
 using GameBoy.IO;
+using GameBoy.Input;
+using GameBoy.Graphics;
+using GameBoy.CPU;
 
 namespace GameBoy.Memory
 {
 	public class Ram
 	{
+		private Random random = new Random ();
+		private Gpu gpu;
+		private InputHandler input;
+		private Interrupt interrupt;
+
 		private readonly byte[] IO_RESET = new byte[0x100] {
 			0x0F, 0x00, 0x7C, 0xFF, 0x00, 0x00, 0x00, 0xF8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01,
 			0x80, 0xBF, 0xF3, 0xFF, 0xBF, 0xFF, 0x3F, 0x00, 0xFF, 0xBF, 0x7F, 0xFF, 0x9F, 0xFF, 0xBF, 0xFF,
@@ -34,18 +42,26 @@ namespace GameBoy.Memory
 
 		public byte[] Oam { get; set; }
 
+		public byte[] Vram { get; set; }
+
 		public byte[] Wram { get; set; }
 
 		public byte[] Hram { get; set; }
 
-		public Ram (Rom rom)
+		public Ram (Rom rom, Gpu gpu, InputHandler input, Interrupt interrupt)
 		{
 			Rom = rom;
+			Registers = new Register ();
 			Sram = new byte[0x2000];
 			Io = new byte[0x100];
+			Vram = new byte[0x2000];
 			Oam = new byte[0x100];
 			Wram = new byte[0x2000];
 			Hram = new byte[0x80];
+
+			this.gpu = gpu;
+			this.input = input;
+			this.interrupt = interrupt;
 		}
 
 		public void Reset ()
@@ -54,6 +70,7 @@ namespace GameBoy.Memory
 			Array.Clear (Sram, 0, Sram.Length);
 			Array.Copy (IO_RESET, Io, IO_RESET.Length);
 			Array.Clear (Oam, 0, Oam.Length);
+			Array.Clear (Vram, 0, Vram.Length);
 			Array.Clear (Wram, 0, Wram.Length);
 			Array.Clear (Hram, 0, Hram.Length);
 			#endregion
@@ -131,7 +148,48 @@ namespace GameBoy.Memory
 
 		public byte ReadByte (ushort address)
 		{
-			throw new NotImplementedException ("ReadByte not yet implemented");
+			if (address <= 0x7fff) {
+				return Rom.Cart [address];
+			} else if (address >= 0xa000 && address <= 0xbfff) {
+				return Sram [address - 0xa000];
+			} else if (address >= 0x8000 && address <= 0x9fff) {
+				return Vram [address - 0x8000];
+			} else if (address >= 0xc000 && address <= 0xdfff) {
+				return Wram [address - 0xc000];
+			} else if (address >= 0xe000 && address <= 0xfdff) {
+				return Wram [address - 0xe000];
+			} else if (address >= 0xfe00 && address <= 0xfeff) {
+				return Oam [address - 0xfe00];
+			} else if (address == 0xff04) {
+				return (byte)random.Next ();
+			} else if (address == 0xff40) {
+				return gpu.Display.Control;
+			} else if (address == 0xff42) {
+				return gpu.Display.ScrollY;
+			} else if (address == 0xff43) {
+				return gpu.Display.ScrollX;
+			} else if (address == 0xff44) {
+				return gpu.Display.Scanline;
+			} else if (address == 0xff00) {
+				if ((Io [0x00] & 0x20) == 0) {
+					return (byte)(0xc0 | input.Keys.Faces | 0x10);
+				} else if ((Io [0x00] & 0x10) == 0) {
+					return (byte)(0xc0 | input.Keys.Directions | 0x20);
+				} else if ((Io [0x00] & 0x30) == 0) {
+					return 0xff;
+				} else {
+					return 0;
+				}
+			} else if (address == 0xff0f) {
+				return interrupt.Flags;
+			} else if (address == 0xffff) {
+				return interrupt.Enable;
+			} else if (address >= 0xff80 && address <= 0xfffe) {
+				return Hram [address - 0xff80];
+			} else if (address >= 0xff00 && address <= 0xff7f) {
+				return Io [address - 0xff00];
+			}
+			return 0;
 		}
 
 		public ushort ReadShort (ushort address)
@@ -148,7 +206,53 @@ namespace GameBoy.Memory
 
 		public void WriteByte (ushort address, byte value)
 		{
-			throw new NotImplementedException ("WriteByte not yet implemented");
+			if(address == 0xff00) {
+				Debug.Enabled = true;
+			}
+			if (address >= 0xa000 && address <= 0xbfff) {
+				Sram [address - 0xa000] = value;
+			} else if (address >= 0x8000 && address <= 0x9fff) {
+				Vram [address - 0x8000] = value;
+				if (address <= 0x97ff) {
+					gpu.UpdateTile (address, value, Vram);
+				}
+			}
+
+			if (address >= 0xc000 && address <= 0xdfff) {
+				Wram [address - 0xc000] = value;
+			} else if (address >= 0xe000 && address <= 0xfdff) {
+				Wram [address - 0xe000] = value;
+			} else if (address >= 0xfe00 && address <= 0xfeff) {
+				Oam [address - 0xfe00] = value;
+			} else if (address >= 0xff80 && address <= 0xfffe) {
+				Hram [address - 0xff80] = value;
+			} else if (address == 0xff40) {
+				gpu.Display.Control = value;
+			} else if (address == 0xff42) {
+				gpu.Display.ScrollY = value;
+			} else if (address == 0xff43) {
+				gpu.Display.ScrollX = value;
+			} else if (address == 0xff46) {
+				Copy (0xfe00, (ushort)(value << 8), 160); // OAM DMA
+			} else if (address == 0xff47) { // write only
+				for (int i = 0; i < 4; i++) {
+					gpu.Display.BackgroundPalette [i] = gpu.Display.PALETTE [(value >> (i * 2)) & 3];
+				}
+			} else if (address == 0xff48) { // write only
+				for (int i = 0; i < 4; i++) {
+					gpu.Display.SpritePalette [0] [i] = gpu.Display.PALETTE [(value >> (i * 2)) & 3];
+				}
+			} else if (address == 0xff49) { // write only
+				for (int i = 0; i < 4; i++) {
+					gpu.Display.SpritePalette [1] [i] = gpu.Display.PALETTE [(value >> (i * 2)) & 3];
+				}
+			} else if (address >= 0xff00 && address <= 0xff7f) {
+				Io [address - 0xff00] = value;
+			} else if (address == 0xff0f) {
+				interrupt.Flags = value;
+			} else if (address == 0xffff) {
+				interrupt.Enable = value;
+			}
 		}
 
 		public void WriteShort (ushort address, ushort value)

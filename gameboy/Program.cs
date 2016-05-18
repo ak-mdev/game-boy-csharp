@@ -17,16 +17,14 @@ namespace GameBoy
 				Console.WriteLine("ERROR: {0} does not exist in {1}", filename, Directory.GetCurrentDirectory().ToString()); 
 			}
 
-			var rom = new Rom (filename);
-			rom.Loaded += (sender, e) => {
-				Console.WriteLine (rom.Cart);
-			};
-			rom.Load ();
+			var gameboy = new GameBoy (filename);
 
-			//var gameboy = new GameBoy (filename);
+			gameboy.Start ();
+		}
 
-			//gameboy.Start ();
+		public static void Quit ()
+		{
+			Environment.Exit (0);
 		}
 	}
 }
-

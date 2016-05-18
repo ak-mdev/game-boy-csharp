@@ -5,49 +5,43 @@ namespace GameBoy.CPU
 {
 	public class Cpu
 	{
-		private Ram Ram;
-
-		public InstructionSet InstructionSet { get; }
+		public InstructionSet InstructionSet { get; private set; }
 
 		public ulong Ticks { get; set; }
 
-		public Interrupt Interrupt { get; set; }
-
-		public Cpu (Ram Ram)
+		public Cpu ()
 		{
-			this.Ram = Ram;
-			InstructionSet = new InstructionSet (this.Ram);
 		}
 
-		public void Reset ()
+		public void Reset (Ram ram, Interrupt interrupt)
 		{
-			Interrupt.Master = 1;
-			Interrupt.Enable = 0;
-			Interrupt.Flags = 0;
-
 			Ticks = 0;
+			InstructionSet = new InstructionSet (this, ram, interrupt);
 		}
 
-		public void Step ()
+		public void Step (Ram ram)
 		{
-			var instructionIndex = Ram.ReadByte (Ram.Registers.PC++);
+			var instructionIndex = ram.ReadByte (ram.Registers.PC++);
 			var instruction = InstructionSet [instructionIndex];
 
-			ushort operand;
-			switch (instruction.Operands) {
-			case 0:
-				instruction.Handler.DynamicInvoke ();
-				break;
-			case 1:
-				operand = (ushort)Ram.ReadByte (Ram.Registers.PC);
-				instruction.Handler.DynamicInvoke ((byte)operand);
-				break;
-			case 2:
-				operand = Ram.ReadShort (Ram.Registers.PC);
-				instruction.Handler.DynamicInvoke (operand);
-				break;
+			ushort operand = 0;
+			if (instruction.Operands == 1) {
+				operand = (ushort)ram.ReadByte (ram.Registers.PC);
+			} else if (instruction.Operands == 2) {
+				operand = ram.ReadShort (ram.Registers.PC);
 			}
-			Ram.Registers.PC += instruction.Operands;
+
+			ram.Registers.PC += instruction.Operands;
+
+			if (instruction.Operands == 0) {
+				instruction.Handler.Invoke ();
+			} else if (instruction.Operands == 1) {
+				var byteInstruction = (Instruction<byte>)instruction;
+				byteInstruction.Handler ((byte)operand);
+			} else if (instruction.Operands == 2) {
+				var shortInstruction = (Instruction<ushort>)instruction;
+				shortInstruction.Handler (operand);
+			}
 
 			Ticks += instruction.Ticks;
 		}

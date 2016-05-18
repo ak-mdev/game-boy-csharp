@@ -65,6 +65,8 @@
     <Compile Include="Display\Sprite.cs" />
     <Compile Include="Display\GpuControl.cs" />
     <Compile Include="Display\Color.cs" />
+    <Compile Include="Display\SpriteOptions.cs" />
+    <Compile Include="Debug.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="CPU\" />

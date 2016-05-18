@@ -8,20 +8,19 @@ namespace GameBoy.Input
 
 		public InputHandler ()
 		{
+			Keys = new Keys ();
 		}
 
 		public void Reset ()
 		{
-			/*
-			keys.a = 1;
-			keys.b = 1;
-			keys.select = 1;
-			keys.start = 1;
-			keys.right = 1;
-			keys.left = 1;
-			keys.up = 1;
-			keys.down = 1;
-			*/
+			Keys.A = 1;
+			Keys.B = 1;
+			Keys.Select = 1;
+			Keys.Start = 1;
+			Keys.Right = 1;
+			Keys.Left = 1;
+			Keys.Up = 1;
+			Keys.Down = 1;
 		}
 	}
 }
