@@ -33,6 +33,11 @@ namespace GameBoy.CPU
 
 			ram.Registers.PC += instruction.Operands;
 
+			var disassembly = string.Copy (instruction.Disassembly);
+			disassembly = disassembly.Replace ("nn", operand.ToString()).Replace ("n", operand.ToString());
+
+			Console.WriteLine (disassembly);
+
 			if (instruction.Operands == 0) {
 				instruction.Handler.Invoke ();
 			} else if (instruction.Operands == 1) {

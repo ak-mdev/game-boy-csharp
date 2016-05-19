@@ -38,9 +38,9 @@ namespace GameBoy.CPU
 		{
 			memory.Registers.PC--;
 
-			var instruction = memory.ReadByte(memory.Registers.PC);
+			var instruction = memory.ReadByte (memory.Registers.PC);
 
-			Console.WriteLine("Undefined instruction {0}!\n\nCheck stdout for more details.", instruction.ToString("X"));
+			Console.WriteLine ("Undefined instruction {0}!\n\nCheck stdout for more details.", instruction.ToString ("X"));
 
 			Program.Quit ();
 		}
@@ -256,10 +256,199 @@ namespace GameBoy.CPU
 		#endregion
 
 		#region CB instructions
-		public static void CB (byte instruction)
+
+		public static byte Rlc (byte value, Ram ram)
 		{
-			
+			var carry = (value & 0x80) >> 7;
+
+			if ((value & 0x80) != 0) {
+				ram.SetFlag (Flag.Carry);
+			} else {
+				ram.ClearFlag (Flag.Carry);
+			}
+
+			value <<= 1;
+			value += (byte)carry;
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
+
+			return value;
 		}
+
+		public static byte Rrc (byte value, Ram ram)
+		{
+			var carry = value & 0x01;
+
+			value >>= 1;
+
+			if (carry != 0) {
+				ram.SetFlag (Flag.Carry);
+				value |= 0x80;
+			} else {
+				ram.ClearFlag (Flag.Carry);
+			}
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
+
+			return value;
+		}
+
+		public static byte Rl (byte value, Ram ram)
+		{
+			var carry = ram.IsFlagSet (Flag.Carry) ? 1 : 0;
+
+			if ((value & 0x80) != 0) {
+				ram.SetFlag (Flag.Carry);
+			} else {
+				ram.ClearFlag (Flag.Carry);
+			}
+
+			value <<= 1;
+			value += (byte)carry;
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
+
+			return value;
+		}
+
+		public static byte Rr (byte value, Ram ram)
+		{
+			value >>= 1;
+			if (ram.IsFlagSet (Flag.Carry)) {
+				value |= 0x80;
+			}
+
+			if ((value & 0x01) != 0) {
+				ram.SetFlag (Flag.Carry);
+			} else {
+				ram.ClearFlag (Flag.Carry);
+			}
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
+
+			return value;
+		}
+
+		public static byte Sla (byte value, Ram ram)
+		{
+			if ((value & 0x80) != 0) {
+				ram.SetFlag (Flag.Carry);
+			} else {
+				ram.ClearFlag (Flag.Carry);
+			}
+
+			value <<= 1;
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
+
+			return value;
+		}
+
+		public static byte Sra (byte value, Ram ram)
+		{
+			if ((value & 0x01) != 0) {
+				ram.SetFlag (Flag.Carry);
+			} else {
+				ram.ClearFlag (Flag.Carry);
+			}
+
+			value = (byte)((value & 0x80) | (value >> 1));
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
+
+			return value;
+		}
+
+		public static byte Swap (byte value, Ram ram)
+		{
+			value = (byte)(((value & 0xf) << 4) | ((value & 0xf0) >> 4));
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry | Flag.Carry);
+
+			return value;
+		}
+
+		public static byte Srl (byte value, Ram ram)
+		{
+			if ((value & 0x01) != 0) {
+				ram.SetFlag (Flag.Carry);
+			} else {
+				ram.ClearFlag (Flag.Carry);
+			}
+
+			value >>= 1;
+
+			if (value != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
+
+			return value;
+		}
+
+		public static void Bit (byte bit, byte value, Ram ram)
+		{
+			if ((value & bit) != 0) {
+				ram.ClearFlag (Flag.Zero);
+			} else {
+				ram.SetFlag (Flag.Zero);
+			}
+
+			ram.ClearFlag (Flag.Negative);
+			ram.SetFlag (Flag.HalfCarry);
+		}
+
+		public static byte Set (byte bit, byte value)
+		{
+			value |= bit;
+			return value;
+		}
+
 		#endregion
 
 	}
@@ -272,10 +461,10 @@ namespace GameBoy.CPU
 
 		public Instruction (string disassembly, byte ticks, Action<T> handler) : base (disassembly, ticks)
 		{
-			if (typeof(byte).IsAssignableFrom(typeof(T))) {
+			if (typeof(byte).IsAssignableFrom (typeof(T))) {
 				Operands = 1;
 				Handler = handler;
-			} else if (typeof(ushort).IsAssignableFrom(typeof(T))) {
+			} else if (typeof(ushort).IsAssignableFrom (typeof(T))) {
 				Operands = 2;
 				Handler = handler;
 			} else {

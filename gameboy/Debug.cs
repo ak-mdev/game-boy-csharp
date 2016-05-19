@@ -63,6 +63,31 @@ namespace GameBoy
 			Console.WriteLine("IE: {0}\n", interrupt.Enable);
 			Console.WriteLine("IF: {0}\n", interrupt.Flags);
 		}
+
+		public static void Write (string message)
+		{
+			System.Diagnostics.Debug.Write (message);
+		}
+
+		public static void WriteIf (bool condition, string message)
+		{
+			System.Diagnostics.Debug.WriteIf (condition, message);
+		}
+
+		public static void WriteLine (string message)
+		{
+			System.Diagnostics.Debug.WriteLine (message);
+		}
+
+		public static void WriteLine(string format, params object[] args)
+		{
+			System.Diagnostics.Debug.WriteLine (format, args);
+		}
+
+		public static void WriteLineIf (bool condition, string message)
+		{
+			System.Diagnostics.Debug.WriteIf (condition, message);
+		}
 	}
 }
 

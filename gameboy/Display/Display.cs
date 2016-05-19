@@ -16,6 +16,22 @@ namespace GameBoy.Graphics
 			new Color (0, 0, 0)
 		};
 
+		private uint vao = 0;
+		private uint vbo = 0;
+		private readonly float[] VERTEX_BUFFER_DATA = new float[] {
+			-1.0f, -1.0f, 0.0f,
+			1.0f, -1.0f, 0.0f,
+			-1.0f,  1.0f, 0.0f,
+			-1.0f,  1.0f, 0.0f,
+			1.0f, -1.0f, 0.0f,
+			1.0f,  1.0f, 0.0f
+		};
+		private int program = 0;
+		private int texture = 0;
+		private int time = 0;
+		private uint fbo = 0;
+		private uint renderedTexture = 0;
+
 		public Color[] FrameBuffer { get; set; }
 
 		public byte Control { get; set; }
@@ -133,12 +149,13 @@ namespace GameBoy.Graphics
 			}
 		}
 
-		public void DrawFrameBuffer()
+		public void DrawFrameBuffer ()
 		{
 			GL.Clear (ClearBufferMask.ColorBufferBit);
-			GL.RasterPos2 (-1, 1);
-			GL.PixelZoom (1, -1);
-			GL.DrawPixels <Color> (160, 144, PixelFormat.Rgb, PixelType.UnsignedByte, FrameBuffer);
+
+			GL.BindFramebuffer (FramebufferTarget.Framebuffer, fbo);
+			GL.Viewport (0, 0, Width, Height);
+
 			SwapBuffers ();
 		}
 
@@ -149,6 +166,38 @@ namespace GameBoy.Graphics
 			Title = "Tetris";
 			WindowBorder = WindowBorder.Fixed;
 			GL.ClearColor (System.Drawing.Color.CornflowerBlue);
+
+			GL.GenVertexArrays (1, out vao);
+			GL.BindVertexArray (vao);
+
+			GL.GenBuffers (1, out vbo);
+			GL.BindBuffer (BufferTarget.ArrayBuffer, vbo);
+			GL.BufferData<float>(BufferTarget.ArrayBuffer, new IntPtr(VERTEX_BUFFER_DATA.Length * sizeof(float)), VERTEX_BUFFER_DATA, BufferUsageHint.StaticDraw);
+
+			// Create and compile our GLSL program from the shaders
+			program = Shader.Load("vertex.glsl", "fragment.glsl");
+			texture = GL.GetUniformLocation(program, "renderedTexture");
+			time = GL.GetUniformLocation (program, "time");
+
+			GL.GenFramebuffers (1, out fbo);
+			GL.BindFramebuffer (FramebufferTarget.Framebuffer, fbo);
+			GL.GenTextures (1, out renderedTexture);
+
+			GL.BindTexture (TextureTarget.Texture2D, renderedTexture);
+			GL.TexImage2D (TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, 1024, 768, 0, PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
+			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
+			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+			GL.FramebufferTexture(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, renderedTexture, 0);
+
+			var drawBuffers = new DrawBuffersEnum[] { DrawBuffersEnum.ColorAttachment0 };
+			GL.DrawBuffers (1, drawBuffers);
+
+			var status = GL.CheckFramebufferStatus (FramebufferTarget.Framebuffer);
+			if (status != FramebufferErrorCode.FramebufferComplete) {
+				Console.WriteLine ("ERROR: Framebuffer creation failed ({0})", status.ToString ());
+				Program.Quit ();
+			}
+
 		}
 	}
 }

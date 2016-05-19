@@ -5,16 +5,18 @@ namespace GameBoy.CPU
 {
 	public class InstructionSet
 	{
-		private Instruction[] instructions;
+		private Instruction[] baseInstructions;
+		private Instruction[] cbInstructions;
 
 		public InstructionSet (Cpu cpu, Ram ram, Interrupt interrupt)
 		{
-			instructions = GetInstructions (cpu, ram, interrupt);
+			baseInstructions = GetInstructions (cpu, ram, interrupt);
+			cbInstructions = GetCBInstructions (ram);
 		}
 
 		public Instruction this [byte key] {
 			get {
-				return instructions [key];
+				return baseInstructions [key];
 			}
 		}
 
@@ -800,7 +802,11 @@ namespace GameBoy.CPU
 						cpu.Ticks += 12;
 					}
 				}), //0xCA
-				new Instruction <byte> ("CB n", 0, Instruction.CB), //0xCB
+				new Instruction <byte> ("CB n", 0, (byte value) => {
+					var instruction = cbInstructions [value];
+					instruction.Handler ();
+					cpu.Ticks += instruction.Ticks;
+				}), //0xCB
 				new Instruction<ushort> ("CALL Z, nn", 0, (ushort value) => {
 					if (ram.IsFlagSet (Flag.Zero)) {
 						ram.WriteToStack (ram.Registers.PC);
@@ -1078,564 +1084,833 @@ namespace GameBoy.CPU
 		private Instruction[] GetCBInstructions (Ram ram)
 		{
 			return new Instruction[] {
-				
 				#region 0x0*
-				new Instruction<byte> ("RLC B", 8, (byte value) => {
+				new Instruction ("RLC B", 8, () => {
+					ram.Registers.B = Instruction.Rlc (ram.Registers.B, ram);
 				}), // 0x00
-				new Instruction<byte> ("RLC C", 8, (byte value) => {
+				new Instruction ("RLC C", 8, () => {
+					ram.Registers.C = Instruction.Rlc (ram.Registers.C, ram);
 				}), // 0x01
-				new Instruction<byte> ("RLC D", 8, (byte value) => {
+				new Instruction ("RLC D", 8, () => {
+					ram.Registers.D = Instruction.Rlc (ram.Registers.D, ram);
 				}), // 0x02
-				new Instruction<byte> ("RLC E", 8, (byte value) => {
+				new Instruction ("RLC E", 8, () => {
+					ram.Registers.E = Instruction.Rlc (ram.Registers.E, ram);
 				}), // 0x03
-				new Instruction<byte> ("RLC H", 8, (byte value) => {
+				new Instruction ("RLC H", 8, () => {
+					ram.Registers.H = Instruction.Rlc (ram.Registers.H, ram);
 				}), // 0x04
-				new Instruction<byte> ("RLC L", 8, (byte value) => {
+				new Instruction ("RLC L", 8, () => {
+					ram.Registers.L = Instruction.Rlc (ram.Registers.L, ram);
 				}), // 0x05
-				new Instruction<byte> ("RLC (HL)", 16, (byte value) => {
+				new Instruction ("RLC (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Rlc (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x06
-				new Instruction<byte> ("RLC A", 8, (byte value) => {
+				new Instruction ("RLC A", 8, () => {
+					ram.Registers.A = Instruction.Rlc (ram.Registers.A, ram);
 				}), // 0x07
-				new Instruction<byte> ("RRC B", 8, (byte value) => {
+				new Instruction ("RRC B", 8, () => {
+					ram.Registers.B = Instruction.Rrc (ram.Registers.B, ram);
 				}), // 0x08
-				new Instruction<byte> ("RRC C", 8, (byte value) => {
+				new Instruction ("RRC C", 8, () => {
+					ram.Registers.C = Instruction.Rrc (ram.Registers.C, ram);
 				}), // 0x09
-				new Instruction<byte> ("RRC D", 8, (byte value) => {
+				new Instruction ("RRC D", 8, () => {
+					ram.Registers.D = Instruction.Rrc (ram.Registers.D, ram);
 				}), // 0x0A
-				new Instruction<byte> ("RRC E", 8, (byte value) => {
+				new Instruction ("RRC E", 8, () => {
+					ram.Registers.E = Instruction.Rrc (ram.Registers.E, ram);
 				}), // 0x0B
-				new Instruction<byte> ("RRC H", 8, (byte value) => {
+				new Instruction ("RRC H", 8, () => {
+					ram.Registers.H = Instruction.Rrc (ram.Registers.H, ram);
 				}), // 0x0C
-				new Instruction<byte> ("RRC L", 8, (byte value) => {
+				new Instruction ("RRC L", 8, () => {
+					ram.Registers.L = Instruction.Rrc (ram.Registers.L, ram);
 				}), // 0x0D
-				new Instruction<byte> ("RRC (HL)", 16, (byte value) => {
+				new Instruction ("RRC (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Rrc (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x0E
-				new Instruction<byte> ("RRC A", 8, (byte value) => {
+				new Instruction ("RRC A", 8, () => {
+					ram.Registers.A = Instruction.Rrc (ram.Registers.A, ram);
 				}), // 0x0F
 				#endregion
 
 				#region 0x1*
-				new Instruction<byte> ("RL B", 8, (byte value) => {
+				new Instruction ("RL B", 8, () => {
+					ram.Registers.B = Instruction.Rl (ram.Registers.B, ram);
 				}), // 0x10
-				new Instruction<byte> ("RL C", 8, (byte value) => {
+				new Instruction ("RL C", 8, () => {
+					ram.Registers.C = Instruction.Rl (ram.Registers.C, ram);
 				}), // 0x11
-				new Instruction<byte> ("RL D", 8, (byte value) => {
+				new Instruction ("RL D", 8, () => {
+					ram.Registers.D = Instruction.Rl (ram.Registers.D, ram);
 				}), // 0x12
-				new Instruction<byte> ("RL E", 8, (byte value) => {
+				new Instruction ("RL E", 8, () => {
+					ram.Registers.E = Instruction.Rl (ram.Registers.E, ram);
 				}), // 0x13
-				new Instruction<byte> ("RL H", 8, (byte value) => {
+				new Instruction ("RL H", 8, () => {
+					ram.Registers.H = Instruction.Rl (ram.Registers.H, ram);
 				}), // 0x14
-				new Instruction<byte> ("RL L", 8, (byte value) => {
+				new Instruction ("RL L", 8, () => {
+					ram.Registers.L = Instruction.Rl (ram.Registers.L, ram);
 				}), // 0x15
-				new Instruction<byte> ("RL (HL)", 16, (byte value) => {
+				new Instruction ("RL (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Rl (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x16
-				new Instruction<byte> ("RL A", 8, (byte value) => {
+				new Instruction ("RL A", 8, () => {
+					ram.Registers.A = Instruction.Rl (ram.Registers.A, ram);
 				}), // 0x17
-				new Instruction<byte> ("RR B", 8, (byte value) => {
+				new Instruction ("RR B", 8, () => {
+					ram.Registers.B = Instruction.Rr (ram.Registers.B, ram);
 				}), // 0x18
-				new Instruction<byte> ("RR C", 8, (byte value) => {
+				new Instruction ("RR C", 8, () => {
+					ram.Registers.C = Instruction.Rr (ram.Registers.C, ram);
 				}), // 0x19
-				new Instruction<byte> ("RR D", 8, (byte value) => {
+				new Instruction ("RR D", 8, () => {
+					ram.Registers.D = Instruction.Rr (ram.Registers.D, ram);
 				}), // 0x1A
-				new Instruction<byte> ("RR E", 8, (byte value) => {
+				new Instruction ("RR E", 8, () => {
+					ram.Registers.E = Instruction.Rr (ram.Registers.E, ram);
 				}), // 0x1B
-				new Instruction<byte> ("RR H", 8, (byte value) => {
+				new Instruction ("RR H", 8, () => {
+					ram.Registers.H = Instruction.Rr (ram.Registers.H, ram);
 				}), // 0x1C
-				new Instruction<byte> ("RR L", 8, (byte value) => {
+				new Instruction ("RR L", 8, () => {
+					ram.Registers.L = Instruction.Rr (ram.Registers.L, ram);
 				}), // 0x1D
-				new Instruction<byte> ("RR (HL)", 16, (byte value) => {
+				new Instruction ("RR (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Rr (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x1E
-				new Instruction<byte> ("RR A", 8, (byte value) => {
+				new Instruction ("RR A", 8, () => {
+					ram.Registers.A = Instruction.Rr (ram.Registers.A, ram);
 				}), // 0x1F
 				#endregion
 
 				#region 0x2*
-				new Instruction<byte> ("SLA B", 8, (byte value) => {
+				new Instruction ("SLA B", 8, () => {
+					ram.Registers.B = Instruction.Sla (ram.Registers.B, ram);
 				}), // 0x20
-				new Instruction<byte> ("SLA C", 8, (byte value) => {
+				new Instruction ("SLA C", 8, () => {
+					ram.Registers.C = Instruction.Sla (ram.Registers.C, ram);
 				}), // 0x21
-				new Instruction<byte> ("SLA D", 8, (byte value) => {
+				new Instruction ("SLA D", 8, () => {
+					ram.Registers.D = Instruction.Sla (ram.Registers.D, ram);
 				}), // 0x22
-				new Instruction<byte> ("SLA E", 8, (byte value) => {
+				new Instruction ("SLA E", 8, () => {
+					ram.Registers.E = Instruction.Sla (ram.Registers.E, ram);
 				}), // 0x23
-				new Instruction<byte> ("SLA H", 8, (byte value) => {
+				new Instruction ("SLA H", 8, () => {
+					ram.Registers.H = Instruction.Sla (ram.Registers.H, ram);
 				}), // 0x24
-				new Instruction<byte> ("SLA L", 8, (byte value) => {
+				new Instruction ("SLA L", 8, () => {
+					ram.Registers.L = Instruction.Sla (ram.Registers.L, ram);
 				}), // 0x25
-				new Instruction<byte> ("SLA (HL)", 16, (byte value) => {
+				new Instruction ("SLA (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Sla (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x26
-				new Instruction<byte> ("SLA A", 8, (byte value) => {
+				new Instruction ("SLA A", 8, () => {
+					ram.Registers.A = Instruction.Sla (ram.Registers.A, ram);
 				}), // 0x27
-				new Instruction<byte> ("SRA B", 8, (byte value) => {
+				new Instruction ("SRA B", 8, () => {
+					ram.Registers.B = Instruction.Sra (ram.Registers.B, ram);
 				}), // 0x28
-				new Instruction<byte> ("SRA C", 8, (byte value) => {
+				new Instruction ("SRA C", 8, () => {
+					ram.Registers.C = Instruction.Sra (ram.Registers.C, ram);
 				}), // 0x29
-				new Instruction<byte> ("SRA D", 8, (byte value) => {
+				new Instruction ("SRA D", 8, () => {
+					ram.Registers.D = Instruction.Sra (ram.Registers.D, ram);
 				}), // 0x2A
-				new Instruction<byte> ("SRA E", 8, (byte value) => {
+				new Instruction ("SRA E", 8, () => {
+					ram.Registers.E = Instruction.Sra (ram.Registers.E, ram);
 				}), // 0x2B
-				new Instruction<byte> ("SRA H", 8, (byte value) => {
+				new Instruction ("SRA H", 8, () => {
+					ram.Registers.H = Instruction.Sra (ram.Registers.H, ram);
 				}), // 0x2C
-				new Instruction<byte> ("SRA L", 8, (byte value) => {
+				new Instruction ("SRA L", 8, () => {
+					ram.Registers.L = Instruction.Sra (ram.Registers.L, ram);
 				}), // 0x2D
-				new Instruction<byte> ("SRA (HL)", 16, (byte value) => {
+				new Instruction ("SRA (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Sra (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x2E
-				new Instruction<byte> ("SRA A", 8, (byte value) => {
+				new Instruction ("SRA A", 8, () => {
+					ram.Registers.A = Instruction.Sra (ram.Registers.A, ram);
 				}), // 0x2F
 				#endregion
 
 				#region 0x3*
-				new Instruction<byte> ("SWAP B", 8, (byte value) => {
+				new Instruction ("SWAP B", 8, () => {
+					ram.Registers.B = Instruction.Swap (ram.Registers.B, ram);
 				}), // 0x30
-				new Instruction<byte> ("SWAP C", 8, (byte value) => {
+				new Instruction ("SWAP C", 8, () => {
+					ram.Registers.C = Instruction.Swap (ram.Registers.C, ram);
 				}), // 0x31
-				new Instruction<byte> ("SWAP D", 8, (byte value) => {
+				new Instruction ("SWAP D", 8, () => {
+					ram.Registers.D = Instruction.Swap (ram.Registers.D, ram);
 				}), // 0x32
-				new Instruction<byte> ("SWAP E", 8, (byte value) => {
+				new Instruction ("SWAP E", 8, () => {
+					ram.Registers.E = Instruction.Swap (ram.Registers.E, ram);
 				}), // 0x33
-				new Instruction<byte> ("SWAP H", 8, (byte value) => {
+				new Instruction ("SWAP H", 8, () => {
+					ram.Registers.H = Instruction.Swap (ram.Registers.H, ram);
 				}), // 0x34
-				new Instruction<byte> ("SWAP L", 8, (byte value) => {
+				new Instruction ("SWAP L", 8, () => {
+					ram.Registers.L = Instruction.Swap (ram.Registers.L, ram);
 				}), // 0x35
-				new Instruction<byte> ("SWAP (HL)", 16, (byte value) => {
+				new Instruction ("SWAP (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Swap (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x36
-				new Instruction<byte> ("SWAP A", 8, (byte value) => {
+				new Instruction ("SWAP A", 8, () => {
+					ram.Registers.A = Instruction.Swap (ram.Registers.A, ram);
 				}), // 0x37
-				new Instruction<byte> ("SRL B", 8, (byte value) => {
+				new Instruction ("SRL B", 8, () => {
+					ram.Registers.B = Instruction.Srl (ram.Registers.B, ram);
 				}), // 0x38
-				new Instruction<byte> ("SRL C", 8, (byte value) => {
+				new Instruction ("SRL C", 8, () => {
+					ram.Registers.C = Instruction.Srl (ram.Registers.C, ram);
 				}), // 0x39
-				new Instruction<byte> ("SRL D", 8, (byte value) => {
+				new Instruction ("SRL D", 8, () => {
+					ram.Registers.D = Instruction.Srl (ram.Registers.D, ram);
 				}), // 0x3A
-				new Instruction<byte> ("SRL E", 8, (byte value) => {
+				new Instruction ("SRL E", 8, () => {
+					ram.Registers.E = Instruction.Srl (ram.Registers.E, ram);
 				}), // 0x3B
-				new Instruction<byte> ("SRL H", 8, (byte value) => {
+				new Instruction ("SRL H", 8, () => {
+					ram.Registers.H = Instruction.Srl (ram.Registers.H, ram);
 				}), // 0x3C
-				new Instruction<byte> ("SRL L", 8, (byte value) => {
+				new Instruction ("SRL L", 8, () => {
+					ram.Registers.L = Instruction.Srl (ram.Registers.L, ram);
 				}), // 0x3D
-				new Instruction<byte> ("SRL (HL)", 16, (byte value) => {
+				new Instruction ("SRL (HL)", 16, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Srl (ram.ReadByte (ram.Registers.HL), ram));
 				}), // 0x3E
-				new Instruction<byte> ("SRL A", 8, (byte value) => {
+				new Instruction ("SRL A", 8, () => {
+					if ((ram.Registers.A & 0x01) != 0) {
+						ram.SetFlag (Flag.Carry);
+					} else {
+						ram.ClearFlag (Flag.Carry);
+					}
+
+					ram.Registers.A >>= 1;
+
+					if (ram.Registers.A != 0) {
+						ram.ClearFlag (Flag.Zero);
+					} else {
+						ram.SetFlag (Flag.Zero);
+					}
+
+					ram.ClearFlag (Flag.Negative | Flag.HalfCarry);
 				}), // 0x3F
 				#endregion
 
 				#region 0x4*
-				new Instruction<byte> ("BIT 0, B", 8, (byte value) => {
+				new Instruction ("BIT 0, B", 8, () => {
+					Instruction.Bit (1 << 0, ram.Registers.B, ram);
 				}), // 0x40
-				new Instruction<byte> ("BIT 0, C", 8, (byte value) => {
+				new Instruction ("BIT 0, C", 8, () => {
+					Instruction.Bit (1 << 0, ram.Registers.C, ram);
 				}), // 0x41
-				new Instruction<byte> ("BIT 0, D", 8, (byte value) => {
+				new Instruction ("BIT 0, D", 8, () => {
+					Instruction.Bit (1 << 0, ram.Registers.D, ram);
 				}), // 0x42
-				new Instruction<byte> ("BIT 0, E", 8, (byte value) => {
+				new Instruction ("BIT 0, E", 8, () => {
+					Instruction.Bit (1 << 0, ram.Registers.E, ram);
 				}), // 0x43
-				new Instruction<byte> ("BIT 0, H", 8, (byte value) => {
+				new Instruction ("BIT 0, H", 8, () => {
+					Instruction.Bit (1 << 0, ram.Registers.H, ram);
 				}), // 0x44
-				new Instruction<byte> ("BIT 0, L", 8, (byte value) => {
+				new Instruction ("BIT 0, L", 8, () => {
+					Instruction.Bit (1 << 0, ram.Registers.L, ram);
 				}), // 0x45
-				new Instruction<byte> ("BIT 0, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 0, (HL)", 12, () => {
+					Instruction.Bit (1 << 0, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x46
-				new Instruction<byte> ("BIT 0, A", 8, (byte value) => {
+				new Instruction ("BIT 0, A", 8, () => {
+					Instruction.Bit (1 << 0, ram.Registers.A, ram);
 				}), // 0x47
-				new Instruction<byte> ("BIT 1, B", 8, (byte value) => {
+				new Instruction ("BIT 1, B", 8, () => {
+					Instruction.Bit (1 << 1, ram.Registers.B, ram);
 				}), // 0x48
-				new Instruction<byte> ("BIT 1, C", 8, (byte value) => {
+				new Instruction ("BIT 1, C", 8, () => {
+					Instruction.Bit (1 << 1, ram.Registers.C, ram);
 				}), // 0x49
-				new Instruction<byte> ("BIT 1, D", 8, (byte value) => {
+				new Instruction ("BIT 1, D", 8, () => {
+					Instruction.Bit (1 << 1, ram.Registers.D, ram);
 				}), // 0x4A
-				new Instruction<byte> ("BIT 1, E", 8, (byte value) => {
+				new Instruction ("BIT 1, E", 8, () => {
+					Instruction.Bit (1 << 1, ram.Registers.E, ram);
 				}), // 0x4B
-				new Instruction<byte> ("BIT 1, H", 8, (byte value) => {
+				new Instruction ("BIT 1, H", 8, () => {
+					Instruction.Bit (1 << 1, ram.Registers.H, ram);
 				}), // 0x4C
-				new Instruction<byte> ("BIT 1, L", 8, (byte value) => {
+				new Instruction ("BIT 1, L", 8, () => {
+					Instruction.Bit (1 << 1, ram.Registers.L, ram);
 				}), // 0x4D
-				new Instruction<byte> ("BIT 1, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 1, (HL)", 12, () => {
+					Instruction.Bit (1 << 1, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x4E
-				new Instruction<byte> ("BIT 1, A", 8, (byte value) => {
+				new Instruction ("BIT 1, A", 8, () => {
+					Instruction.Bit (1 << 1, ram.Registers.A, ram);
 				}), // 0x4F
 				#endregion
 
 				#region 0x5*
-				new Instruction<byte> ("BIT 2, B", 8, (byte value) => {
+				new Instruction ("BIT 2, B", 8, () => {
+					Instruction.Bit (1 << 2, ram.Registers.B, ram);
 				}), // 0x50
-				new Instruction<byte> ("BIT 2, C", 8, (byte value) => {
+				new Instruction ("BIT 2, C", 8, () => {
+					Instruction.Bit (1 << 2, ram.Registers.C, ram);
 				}), // 0x51
-				new Instruction<byte> ("BIT 2, D", 8, (byte value) => {
+				new Instruction ("BIT 2, D", 8, () => {
+					Instruction.Bit (1 << 2, ram.Registers.D, ram);
 				}), // 0x52
-				new Instruction<byte> ("BIT 2, E", 8, (byte value) => {
+				new Instruction ("BIT 2, E", 8, () => {
+					Instruction.Bit (1 << 2, ram.Registers.E, ram);
 				}), // 0x53
-				new Instruction<byte> ("BIT 2, H", 8, (byte value) => {
+				new Instruction ("BIT 2, H", 8, () => {
+					Instruction.Bit (1 << 2, ram.Registers.H, ram);
 				}), // 0x54
-				new Instruction<byte> ("BIT 2, L", 8, (byte value) => {
+				new Instruction ("BIT 2, L", 8, () => {
+					Instruction.Bit (1 << 2, ram.Registers.L, ram);
 				}), // 0x55
-				new Instruction<byte> ("BIT 2, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 2, (HL)", 12, () => {
+					Instruction.Bit (1 << 2, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x56
-				new Instruction<byte> ("BIT 2, A", 8, (byte value) => {
+				new Instruction ("BIT 2, A", 8, () => {
+					Instruction.Bit (1 << 2, ram.Registers.A, ram);
 				}), // 0x57
-				new Instruction<byte> ("BIT 3, B", 8, (byte value) => {
+				new Instruction ("BIT 3, B", 8, () => {
+					Instruction.Bit (1 << 3, ram.Registers.B, ram);
 				}), // 0x58
-				new Instruction<byte> ("BIT 3, C", 8, (byte value) => {
+				new Instruction ("BIT 3, C", 8, () => {
+					Instruction.Bit (1 << 3, ram.Registers.C, ram);
 				}), // 0x59
-				new Instruction<byte> ("BIT 3, D", 8, (byte value) => {
+				new Instruction ("BIT 3, D", 8, () => {
+					Instruction.Bit (1 << 3, ram.Registers.D, ram);
 				}), // 0x5A
-				new Instruction<byte> ("BIT 3, E", 8, (byte value) => {
+				new Instruction ("BIT 3, E", 8, () => {
+					Instruction.Bit (1 << 3, ram.Registers.E, ram);
 				}), // 0x5B
-				new Instruction<byte> ("BIT 3, H", 8, (byte value) => {
+				new Instruction ("BIT 3, H", 8, () => {
+					Instruction.Bit (1 << 3, ram.Registers.H, ram);
 				}), // 0x5C
-				new Instruction<byte> ("BIT 3, L", 8, (byte value) => {
+				new Instruction ("BIT 3, L", 8, () => {
+					Instruction.Bit (1 << 3, ram.Registers.L, ram);
 				}), // 0x5D
-				new Instruction<byte> ("BIT 3, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 3, (HL)", 12, () => {
+					Instruction.Bit (1 << 3, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x5E
-				new Instruction<byte> ("BIT 3, A", 8, (byte value) => {
+				new Instruction ("BIT 3, A", 8, () => {
+					Instruction.Bit (1 << 3, ram.Registers.A, ram);
 				}), // 0x5F
 				#endregion
 
 				#region 0x6*
-				new Instruction<byte> ("BIT 4, B", 8, (byte value) => {
+				new Instruction ("BIT 4, B", 8, () => {
+					Instruction.Bit (1 << 4, ram.Registers.B, ram);
 				}), // 0x60
-				new Instruction<byte> ("BIT 4, C", 8, (byte value) => {
+				new Instruction ("BIT 4, C", 8, () => {
+					Instruction.Bit (1 << 4, ram.Registers.C, ram);
 				}), // 0x61
-				new Instruction<byte> ("BIT 4, D", 8, (byte value) => {
+				new Instruction ("BIT 4, D", 8, () => {
+					Instruction.Bit (1 << 4, ram.Registers.D, ram);
 				}), // 0x62
-				new Instruction<byte> ("BIT 4, E", 8, (byte value) => {
+				new Instruction ("BIT 4, E", 8, () => {
+					Instruction.Bit (1 << 4, ram.Registers.E, ram);
 				}), // 0x63
-				new Instruction<byte> ("BIT 4, H", 8, (byte value) => {
+				new Instruction ("BIT 4, H", 8, () => {
+					Instruction.Bit (1 << 4, ram.Registers.H, ram);
 				}), // 0x64
-				new Instruction<byte> ("BIT 4, L", 8, (byte value) => {
+				new Instruction ("BIT 4, L", 8, () => {
+					Instruction.Bit (1 << 4, ram.Registers.L, ram);
 				}), // 0x65
-				new Instruction<byte> ("BIT 4, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 4, (HL)", 12, () => {
+					Instruction.Bit (1 << 4, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x66
-				new Instruction<byte> ("BIT 4, A", 8, (byte value) => {
+				new Instruction ("BIT 4, A", 8, () => {
+					Instruction.Bit (1 << 4, ram.Registers.A, ram);
 				}), // 0x67
-				new Instruction<byte> ("BIT 5, B", 8, (byte value) => {
+				new Instruction ("BIT 5, B", 8, () => {
+					Instruction.Bit (1 << 5, ram.Registers.B, ram);
 				}), // 0x68
-				new Instruction<byte> ("BIT 5, C", 8, (byte value) => {
+				new Instruction ("BIT 5, C", 8, () => {
+					Instruction.Bit (1 << 5, ram.Registers.C, ram);
 				}), // 0x69
-				new Instruction<byte> ("BIT 5, D", 8, (byte value) => {
+				new Instruction ("BIT 5, D", 8, () => {
+					Instruction.Bit (1 << 5, ram.Registers.D, ram);
 				}), // 0x6A
-				new Instruction<byte> ("BIT 5, E", 8, (byte value) => {
+				new Instruction ("BIT 5, E", 8, () => {
+					Instruction.Bit (1 << 5, ram.Registers.E, ram);
 				}), // 0x6B
-				new Instruction<byte> ("BIT 6, H", 8, (byte value) => {
+				new Instruction ("BIT 5, H", 8, () => {
+					Instruction.Bit (1 << 5, ram.Registers.H, ram);
 				}), // 0x6C
-				new Instruction<byte> ("BIT 6, L", 8, (byte value) => {
+				new Instruction ("BIT 5, L", 8, () => {
+					Instruction.Bit (1 << 5, ram.Registers.L, ram);
 				}), // 0x6D
-				new Instruction<byte> ("BIT 5, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 5, (HL)", 12, () => {
+					Instruction.Bit (1 << 5, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x6E
-				new Instruction<byte> ("BIT 5, A", 8, (byte value) => {
+				new Instruction ("BIT 5, A", 8, () => {
+					Instruction.Bit (1 << 5, ram.Registers.A, ram);
 				}), // 0x6F
 				#endregion
 
 				#region 0x7*
-				new Instruction<byte> ("BIT 6, B", 8, (byte value) => {
+				new Instruction ("BIT 6, B", 8, () => {
+					Instruction.Bit (1 << 6, ram.Registers.B, ram);
 				}), // 0x70
-				new Instruction<byte> ("BIT 6, C", 8, (byte value) => {
+				new Instruction ("BIT 6, C", 8, () => {
+					Instruction.Bit (1 << 6, ram.Registers.C, ram);
 				}), // 0x71
-				new Instruction<byte> ("BIT 6, D", 8, (byte value) => {
+				new Instruction ("BIT 6, D", 8, () => {
+					Instruction.Bit (1 << 6, ram.Registers.D, ram);
 				}), // 0x72
-				new Instruction<byte> ("BIT 6, E", 8, (byte value) => {
+				new Instruction ("BIT 6, E", 8, () => {
+					Instruction.Bit (1 << 6, ram.Registers.E, ram);
 				}), // 0x73
-				new Instruction<byte> ("BIT 6, H", 8, (byte value) => {
+				new Instruction ("BIT 6, H", 8, () => {
+					Instruction.Bit (1 << 6, ram.Registers.H, ram);
 				}), // 0x74
-				new Instruction<byte> ("BIT 6, L", 8, (byte value) => {
+				new Instruction ("BIT 6, L", 8, () => {
+					Instruction.Bit (1 << 6, ram.Registers.L, ram);
 				}), // 0x75
-				new Instruction<byte> ("BIT 6, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 6, (HL)", 12, () => {
+					Instruction.Bit (1 << 6, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x76
-				new Instruction<byte> ("BIT 6, A", 8, (byte value) => {
+				new Instruction ("BIT 6, A", 8, () => {
+					Instruction.Bit (1 << 6, ram.Registers.A, ram);
 				}), // 0x77
-				new Instruction<byte> ("BIT 7, B", 8, (byte value) => {
+				new Instruction ("BIT 7, B", 8, () => {
+					Instruction.Bit (1 << 7, ram.Registers.B, ram);
 				}), // 0x78
-				new Instruction<byte> ("BIT 7, C", 8, (byte value) => {
+				new Instruction ("BIT 7, C", 8, () => {
+					Instruction.Bit (1 << 7, ram.Registers.C, ram);
 				}), // 0x79
-				new Instruction<byte> ("BIT 7, D", 8, (byte value) => {
+				new Instruction ("BIT 7, D", 8, () => {
+					Instruction.Bit (1 << 7, ram.Registers.D, ram);
 				}), // 0x7A
-				new Instruction<byte> ("BIT 7, E", 8, (byte value) => {
+				new Instruction ("BIT 7, E", 8, () => {
+					Instruction.Bit (1 << 7, ram.Registers.E, ram);
 				}), // 0x7B
-				new Instruction<byte> ("BIT 7, H", 8, (byte value) => {
+				new Instruction ("BIT 7, H", 8, () => {
+					Instruction.Bit (1 << 7, ram.Registers.H, ram);
 				}), // 0x7C
-				new Instruction<byte> ("BIT 7, L", 8, (byte value) => {
+				new Instruction ("BIT 7, L", 8, () => {
+					Instruction.Bit (1 << 7, ram.Registers.L, ram);
 				}), // 0x7D
-				new Instruction<byte> ("BIT 7, (HL)", 12, (byte value) => {
+				new Instruction ("BIT 7, (HL)", 12, () => {
+					Instruction.Bit (1 << 7, ram.ReadByte (ram.Registers.HL), ram);
 				}), // 0x7E
-				new Instruction<byte> ("BIT 7, A", 8, (byte value) => {
+				new Instruction ("BIT 7, A", 8, () => {
+					Instruction.Bit (1 << 7, ram.Registers.A, ram);
 				}), // 0x7F
 				#endregion
 
 				#region 0x8*
-				new Instruction<byte> ("RES 0, B", 8, (byte value) => {
+				new Instruction ("RES 0, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 0));
 				}), // 0x80
-				new Instruction<byte> ("RES 0, C", 8, (byte value) => {
+				new Instruction ("RES 0, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 0));
 				}), // 0x81
-				new Instruction<byte> ("RES 0, D", 8, (byte value) => {
+				new Instruction ("RES 0, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 0));
 				}), // 0x82
-				new Instruction<byte> ("RES 0, E", 8, (byte value) => {
+				new Instruction ("RES 0, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 0));
 				}), // 0x83
-				new Instruction<byte> ("RES 0, H", 8, (byte value) => {
+				new Instruction ("RES 0, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 0));
 				}), // 0x84
-				new Instruction<byte> ("RES 0, L", 8, (byte value) => {
+				new Instruction ("RES 0, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 0));
 				}), // 0x85
-				new Instruction<byte> ("RES 0, (HL)", 12, (byte value) => {
+				new Instruction ("RES 0, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 0)));
 				}), // 0x86
-				new Instruction<byte> ("RES 0, A", 8, (byte value) => {
+				new Instruction ("RES 0, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 0));
 				}), // 0x87
-				new Instruction<byte> ("RES 1, B", 8, (byte value) => {
+				new Instruction ("RES 1, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 0));
 				}), // 0x88
-				new Instruction<byte> ("RES 1, C", 8, (byte value) => {
+				new Instruction ("RES 1, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 0));
 				}), // 0x89
-				new Instruction<byte> ("RES 1, D", 8, (byte value) => {
+				new Instruction ("RES 1, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 0));
 				}), // 0x8A
-				new Instruction<byte> ("RES 1, E", 8, (byte value) => {
+				new Instruction ("RES 1, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 0));
 				}), // 0x8B
-				new Instruction<byte> ("RES 1, H", 8, (byte value) => {
+				new Instruction ("RES 1, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 0));
 				}), // 0x8C
-				new Instruction<byte> ("RES 1, L", 8, (byte value) => {
+				new Instruction ("RES 1, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 1));
 				}), // 0x8D
-				new Instruction<byte> ("RES 1, (HL)", 12, (byte value) => {
+				new Instruction ("RES 1, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 1)));
 				}), // 0x8E
-				new Instruction<byte> ("RES 1, A", 8, (byte value) => {
+				new Instruction ("RES 1, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 1));
 				}), // 0x8F
 				#endregion
 
 				#region 0x9*
-				new Instruction<byte> ("RES 2, B", 8, (byte value) => {
+				new Instruction ("RES 2, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 2));
 				}), // 0x90
-				new Instruction<byte> ("RES 2, C", 8, (byte value) => {
+				new Instruction ("RES 2, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 2));
 				}), // 0x91
-				new Instruction<byte> ("RES 2, D", 8, (byte value) => {
+				new Instruction ("RES 2, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 2));
 				}), // 0x92
-				new Instruction<byte> ("RES 2, E", 8, (byte value) => {
+				new Instruction ("RES 2, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 2));
 				}), // 0x93
-				new Instruction<byte> ("RES 2, H", 8, (byte value) => {
+				new Instruction ("RES 2, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 2));
 				}), // 0x94
-				new Instruction<byte> ("RES 2, L", 8, (byte value) => {
+				new Instruction ("RES 2, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 2));
 				}), // 0x95
-				new Instruction<byte> ("RES 2, (HL)", 12, (byte value) => {
+				new Instruction ("RES 2, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 2)));
 				}), // 0x96
-				new Instruction<byte> ("RES 2, A", 8, (byte value) => {
+				new Instruction ("RES 2, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 2));
 				}), // 0x97
-				new Instruction<byte> ("RES 3, B", 8, (byte value) => {
+				new Instruction ("RES 3, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 3));
 				}), // 0x98
-				new Instruction<byte> ("RES 3, C", 8, (byte value) => {
+				new Instruction ("RES 3, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 3));
 				}), // 0x99
-				new Instruction<byte> ("RES 3, D", 8, (byte value) => {
+				new Instruction ("RES 3, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 3));
 				}), // 0x9A
-				new Instruction<byte> ("RES 3, E", 8, (byte value) => {
+				new Instruction ("RES 3, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 3));
 				}), // 0x9B
-				new Instruction<byte> ("RES 3, H", 8, (byte value) => {
+				new Instruction ("RES 3, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 3));
 				}), // 0x9C
-				new Instruction<byte> ("RES 3, L", 8, (byte value) => {
+				new Instruction ("RES 3, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 3));
 				}), // 0x9D
-				new Instruction<byte> ("RES 3, (HL)", 12, (byte value) => {
+				new Instruction ("RES 3, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 3)));
 				}), // 0x9E
-				new Instruction<byte> ("RES 3, A", 8, (byte value) => {
+				new Instruction ("RES 3, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 3));
 				}), // 0x9F
 				#endregion
 
 				#region 0xA*
-				new Instruction<byte> ("RES 4, B", 8, (byte value) => {
+				new Instruction ("RES 4, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 4));
 				}), // 0xA0
-				new Instruction<byte> ("RES 4, C", 8, (byte value) => {
+				new Instruction ("RES 4, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 4));
 				}), // 0xA1
-				new Instruction<byte> ("RES 4, D", 8, (byte value) => {
+				new Instruction ("RES 4, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 4));
 				}), // 0xA2
-				new Instruction<byte> ("RES 4, E", 8, (byte value) => {
+				new Instruction ("RES 4, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 4));
 				}), // 0xA3
-				new Instruction<byte> ("RES 4, H", 8, (byte value) => {
+				new Instruction ("RES 4, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 4));
 				}), // 0xA4
-				new Instruction<byte> ("RES 4, L", 8, (byte value) => {
+				new Instruction ("RES 4, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 4));
 				}), // 0xA5
-				new Instruction<byte> ("RES 4, (HL)", 12, (byte value) => {
+				new Instruction ("RES 4, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 4)));
 				}), // 0xA6
-				new Instruction<byte> ("RES 4, A", 8, (byte value) => {
+				new Instruction ("RES 4, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 4));
 				}), // 0xA7
-				new Instruction<byte> ("RES 5, B", 8, (byte value) => {
+				new Instruction ("RES 5, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 5));
 				}), // 0xA8
-				new Instruction<byte> ("RES 5, C", 8, (byte value) => {
+				new Instruction ("RES 5, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 5));
 				}), // 0xA9
-				new Instruction<byte> ("RES 5, D", 8, (byte value) => {
+				new Instruction ("RES 5, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 5));
 				}), // 0xAA
-				new Instruction<byte> ("RES 5, E", 8, (byte value) => {
+				new Instruction ("RES 5, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 5));
 				}), // 0xAB
-				new Instruction<byte> ("RES 5, H", 8, (byte value) => {
+				new Instruction ("RES 5, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 5));
 				}), // 0xAC
-				new Instruction<byte> ("RES 5, L", 8, (byte value) => {
+				new Instruction ("RES 5, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 5));
 				}), // 0xAD
-				new Instruction<byte> ("RES 5, (HL)", 12, (byte value) => {
+				new Instruction ("RES 5, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 5)));
 				}), // 0xAE
-				new Instruction<byte> ("RES 5, A", 8, (byte value) => {
+				new Instruction ("RES 5, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 5));
 				}), // 0xAF
 				#endregion
 
 				#region 0xB*
-				new Instruction<byte> ("RES 6, B", 8, (byte value) => {
+				new Instruction ("RES 6, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 6));
 				}), // 0xB0
-				new Instruction<byte> ("RES 6, C", 8, (byte value) => {
+				new Instruction ("RES 6, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 6));
 				}), // 0xB1
-				new Instruction<byte> ("RES 6, D", 8, (byte value) => {
+				new Instruction ("RES 6, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 6));
 				}), // 0xB2
-				new Instruction<byte> ("RES 6, E", 8, (byte value) => {
+				new Instruction ("RES 6, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 6));
 				}), // 0xB3
-				new Instruction<byte> ("RES 6, H", 8, (byte value) => {
+				new Instruction ("RES 6, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 6));
 				}), // 0xB4
-				new Instruction<byte> ("RES 6, L", 8, (byte value) => {
+				new Instruction ("RES 6, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 6));
 				}), // 0xB5
-				new Instruction<byte> ("RES 6, (HL)", 12, (byte value) => {
+				new Instruction ("RES 6, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 6)));
 				}), // 0xB6
-				new Instruction<byte> ("RES 6, A", 8, (byte value) => {
+				new Instruction ("RES 6, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 6));
 				}), // 0xB7
-				new Instruction<byte> ("RES 7, B", 8, (byte value) => {
+				new Instruction ("RES 7, B", 8, () => {
+					ram.Registers.B = (byte)(ram.Registers.B & ~(1 << 7));
 				}), // 0xB8
-				new Instruction<byte> ("RES 7, C", 8, (byte value) => {
+				new Instruction ("RES 7, C", 8, () => {
+					ram.Registers.C = (byte)(ram.Registers.C & ~(1 << 7));
 				}), // 0xB9
-				new Instruction<byte> ("RES 7, D", 8, (byte value) => {
+				new Instruction ("RES 7, D", 8, () => {
+					ram.Registers.D = (byte)(ram.Registers.D & ~(1 << 7));
 				}), // 0xBA
-				new Instruction<byte> ("RES 7, E", 8, (byte value) => {
+				new Instruction ("RES 7, E", 8, () => {
+					ram.Registers.E = (byte)(ram.Registers.E & ~(1 << 7));
 				}), // 0xBB
-				new Instruction<byte> ("RES 7, H", 8, (byte value) => {
+				new Instruction ("RES 7, H", 8, () => {
+					ram.Registers.H = (byte)(ram.Registers.H & ~(1 << 7));
 				}), // 0xBC
-				new Instruction<byte> ("RES 7, L", 8, (byte value) => {
+				new Instruction ("RES 7, L", 8, () => {
+					ram.Registers.L = (byte)(ram.Registers.L & ~(1 << 7));
 				}), // 0xBD
-				new Instruction<byte> ("RES 7, (HL)", 12, (byte value) => {
+				new Instruction ("RES 7, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, (byte)(ram.ReadByte (ram.Registers.HL) & ~(1 << 7)));
 				}), // 0xBE
-				new Instruction<byte> ("RES 7, A", 8, (byte value) => {
+				new Instruction ("RES 7, A", 8, () => {
+					ram.Registers.A = (byte)(ram.Registers.A & ~(1 << 7));
 				}), // 0xBF
 				#endregion
 
 				#region 0xC*
-				new Instruction<byte> ("SET 0, B", 8, (byte value) => {
+				new Instruction ("SET 0, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 0, ram.Registers.B);
 				}), // 0xC0
-				new Instruction<byte> ("SET 0, C", 8, (byte value) => {
+				new Instruction ("SET 0, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 0, ram.Registers.C);
 				}), // 0xC1
-				new Instruction<byte> ("SET 0, D", 8, (byte value) => {
+				new Instruction ("SET 0, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 0, ram.Registers.D);
 				}), // 0xC2
-				new Instruction<byte> ("SET 0, E", 8, (byte value) => {
+				new Instruction ("SET 0, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 0, ram.Registers.E);
 				}), // 0xC3
-				new Instruction<byte> ("SET 0, H", 8, (byte value) => {
+				new Instruction ("SET 0, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 0, ram.Registers.H);
 				}), // 0xC4
-				new Instruction<byte> ("SET 0, L", 8, (byte value) => {
+				new Instruction ("SET 0, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 0, ram.Registers.L);
 				}), // 0xC5
-				new Instruction<byte> ("SET 0, (HL)", 12, (byte value) => {
+				new Instruction ("SET 0, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 0, ram.ReadByte (ram.Registers.HL))); 
 				}), // 0xC6
-				new Instruction<byte> ("SET 0, A", 8, (byte value) => {
+				new Instruction ("SET 0, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 0, ram.Registers.A);
 				}), // 0xC7
-				new Instruction<byte> ("SET 1, B", 8, (byte value) => {
+				new Instruction ("SET 1, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 1, ram.Registers.B);
 				}), // 0xC8
-				new Instruction<byte> ("SET 1, C", 8, (byte value) => {
+				new Instruction ("SET 1, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 1, ram.Registers.C);
 				}), // 0xC9
-				new Instruction<byte> ("SET 1, D", 8, (byte value) => {
+				new Instruction ("SET 1, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 1, ram.Registers.D);
 				}), // 0xCA
-				new Instruction<byte> ("SET 1, E", 8, (byte value) => {
+				new Instruction ("SET 1, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 1, ram.Registers.E);
 				}), // 0xCB
-				new Instruction<byte> ("SET 1, H", 8, (byte value) => {
+				new Instruction ("SET 1, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 1, ram.Registers.H);
 				}), // 0xCC
-				new Instruction<byte> ("SET 1, L", 8, (byte value) => {
+				new Instruction ("SET 1, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 1, ram.Registers.L);
 				}), // 0xCD
-				new Instruction<byte> ("SET 1, (HL)", 12, (byte value) => {
+				new Instruction ("SET 1, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 1, ram.ReadByte (ram.Registers.HL)));
 				}), // 0xCE
-				new Instruction<byte> ("SET 1, A", 8, (byte value) => {
+				new Instruction ("SET 1, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 1, ram.Registers.A);
 				}), // 0xCF
 				#endregion
 
 				#region 0xD*
-				new Instruction<byte> ("SET 2, B", 8, (byte value) => {
+				new Instruction ("SET 2, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 2, ram.Registers.B);
 				}), // 0xD0
-				new Instruction<byte> ("SET 2, C", 8, (byte value) => {
+				new Instruction ("SET 2, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 2, ram.Registers.C);
 				}), // 0xD1
-				new Instruction<byte> ("SET 2, D", 8, (byte value) => {
+				new Instruction ("SET 2, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 2, ram.Registers.D);
 				}), // 0xD2
-				new Instruction<byte> ("SET 2, E", 8, (byte value) => {
+				new Instruction ("SET 2, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 2, ram.Registers.E);
 				}), // 0xD3
-				new Instruction<byte> ("SET 2, H", 8, (byte value) => {
+				new Instruction ("SET 2, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 2, ram.Registers.H);
 				}), // 0xD4
-				new Instruction<byte> ("SET 2, L", 8, (byte value) => {
+				new Instruction ("SET 2, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 2, ram.Registers.L);
 				}), // 0xD5
-				new Instruction<byte> ("SET 2, (HL)", 12, (byte value) => {
+				new Instruction ("SET 2, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 2, ram.ReadByte (ram.Registers.HL)));
 				}), // 0xD6
-				new Instruction<byte> ("SET 2, A", 8, (byte value) => {
+				new Instruction ("SET 2, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 2, ram.Registers.A);
 				}), // 0xD7
-				new Instruction<byte> ("SET 3, B", 8, (byte value) => {
+				new Instruction ("SET 3, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 3, ram.Registers.B);
 				}), // 0xD8
-				new Instruction<byte> ("SET 3, C", 8, (byte value) => {
+				new Instruction ("SET 3, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 3, ram.Registers.C);
 				}), // 0xD9
-				new Instruction<byte> ("SET 3, D", 8, (byte value) => {
+				new Instruction ("SET 3, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 3, ram.Registers.D);
 				}), // 0xDA
-				new Instruction<byte> ("SET 3, E", 8, (byte value) => {
+				new Instruction ("SET 3, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 3, ram.Registers.E);
 				}), // 0xDB
-				new Instruction<byte> ("SET 3, H", 8, (byte value) => {
+				new Instruction ("SET 3, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 3, ram.Registers.H);
 				}), // 0xDC
-				new Instruction<byte> ("SET 3, L", 8, (byte value) => {
+				new Instruction ("SET 3, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 3, ram.Registers.L);
 				}), // 0xDD
-				new Instruction<byte> ("SET 3, (HL)", 12, (byte value) => {
+				new Instruction ("SET 3, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 3, ram.ReadByte (ram.Registers.HL)));
 				}), // 0xDE
-				new Instruction<byte> ("SET 3, A", 8, (byte value) => {
+				new Instruction ("SET 3, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 3, ram.Registers.A);
 				}), // 0xDF
 				#endregion
 
 				#region 0xE*
-				new Instruction<byte> ("SET 4, B", 8, (byte value) => {
+				new Instruction ("SET 4, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 4, ram.Registers.B);
 				}), // 0xE0
-				new Instruction<byte> ("SET 4, C", 8, (byte value) => {
+				new Instruction ("SET 4, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 4, ram.Registers.C);
 				}), // 0xE1
-				new Instruction<byte> ("SET 4, D", 8, (byte value) => {
+				new Instruction ("SET 4, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 4, ram.Registers.D);
 				}), // 0xE2
-				new Instruction<byte> ("SET 4, E", 8, (byte value) => {
+				new Instruction ("SET 4, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 4, ram.Registers.E);
 				}), // 0xE3
-				new Instruction<byte> ("SET 4, H", 8, (byte value) => {
+				new Instruction ("SET 4, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 4, ram.Registers.H);
 				}), // 0xE4
-				new Instruction<byte> ("SET 4, L", 8, (byte value) => {
+				new Instruction ("SET 4, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 4, ram.Registers.L);
 				}), // 0xE5
-				new Instruction<byte> ("SET 4, (HL)", 12, (byte value) => {
+				new Instruction ("SET 4, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 4, ram.ReadByte (ram.Registers.HL)));
 				}), // 0xE6
-				new Instruction<byte> ("SET 4, A", 8, (byte value) => {
+				new Instruction ("SET 4, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 4, ram.Registers.A);
 				}), // 0xE7
-				new Instruction<byte> ("SET 5, B", 8, (byte value) => {
+				new Instruction ("SET 5, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 5, ram.Registers.B);
 				}), // 0xE8
-				new Instruction<byte> ("SET 5, C", 8, (byte value) => {
+				new Instruction ("SET 5, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 5, ram.Registers.C);
 				}), // 0xE9
-				new Instruction<byte> ("SET 5, D", 8, (byte value) => {
+				new Instruction ("SET 5, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 5, ram.Registers.D);
 				}), // 0xEA
-				new Instruction<byte> ("SET 5, E", 8, (byte value) => {
+				new Instruction ("SET 5, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 5, ram.Registers.E);
 				}), // 0xEB
-				new Instruction<byte> ("SET 5, H", 8, (byte value) => {
+				new Instruction ("SET 5, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 5, ram.Registers.H);
 				}), // 0xEC
-				new Instruction<byte> ("SET 5, L", 8, (byte value) => {
+				new Instruction ("SET 5, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 5, ram.Registers.L);
 				}), // 0xED
-				new Instruction<byte> ("SET 5, (HL)", 12, (byte value) => {
+				new Instruction ("SET 5, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 5, ram.ReadByte (ram.Registers.HL)));
 				}), // 0xEE
-				new Instruction<byte> ("SET 5, A", 8, (byte value) => {
+				new Instruction ("SET 5, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 5, ram.Registers.A);
 				}), // 0xEF
 				#endregion
 
 				#region 0xF*
-				new Instruction<byte> ("SET 6, B", 8, (byte value) => {
+				new Instruction ("SET 6, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 6, ram.Registers.B);
 				}), // 0xF0
-				new Instruction<byte> ("SET 6, C", 8, (byte value) => {
+				new Instruction ("SET 6, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 6, ram.Registers.C);
 				}), // 0xF1
-				new Instruction<byte> ("SET 6, D", 8, (byte value) => {
+				new Instruction ("SET 6, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 6, ram.Registers.D);
 				}), // 0xF2
-				new Instruction<byte> ("SET 6, E", 8, (byte value) => {
+				new Instruction ("SET 6, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 6, ram.Registers.E);
 				}), // 0xF3
-				new Instruction<byte> ("SET 6, H", 8, (byte value) => {
+				new Instruction ("SET 6, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 6, ram.Registers.H);
 				}), // 0xF4
-				new Instruction<byte> ("SET 6, L", 8, (byte value) => {
+				new Instruction ("SET 6, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 6, ram.Registers.L);
 				}), // 0xF5
-				new Instruction<byte> ("SET 6, (HL)", 12, (byte value) => {
+				new Instruction ("SET 6, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 6, ram.ReadByte (ram.Registers.HL)));
 				}), // 0xF6
-				new Instruction<byte> ("SET 6, A", 8, (byte value) => {
+				new Instruction ("SET 6, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 6, ram.Registers.A);
 				}), // 0xF7
-				new Instruction<byte> ("SET 7, B", 8, (byte value) => {
+				new Instruction ("SET 7, B", 8, () => {
+					ram.Registers.B = Instruction.Set (1 << 7, ram.Registers.B);
 				}), // 0xF8
-				new Instruction<byte> ("SET 7, C", 8, (byte value) => {
+				new Instruction ("SET 7, C", 8, () => {
+					ram.Registers.C = Instruction.Set (1 << 7, ram.Registers.C);
 				}), // 0xF9
-				new Instruction<byte> ("SET 7, D", 8, (byte value) => {
+				new Instruction ("SET 7, D", 8, () => {
+					ram.Registers.D = Instruction.Set (1 << 7, ram.Registers.D);
 				}), // 0xFA
-				new Instruction<byte> ("SET 7, E", 8, (byte value) => {
+				new Instruction ("SET 7, E", 8, () => {
+					ram.Registers.E = Instruction.Set (1 << 7, ram.Registers.E);
 				}), // 0xFB
-				new Instruction<byte> ("SET 7, H", 8, (byte value) => {
+				new Instruction ("SET 7, H", 8, () => {
+					ram.Registers.H = Instruction.Set (1 << 7, ram.Registers.H);
 				}), // 0xFC
-				new Instruction<byte> ("SET 7, L", 8, (byte value) => {
+				new Instruction ("SET 7, L", 8, () => {
+					ram.Registers.L = Instruction.Set (1 << 7, ram.Registers.L);
 				}), // 0xFD
-				new Instruction<byte> ("SET 7, (HL)", 12, (byte value) => {
+				new Instruction ("SET 7, (HL)", 12, () => {
+					ram.WriteByte (ram.Registers.HL, Instruction.Set (1 << 7, ram.ReadByte (ram.Registers.HL)));
 				}), // 0xFE
-				new Instruction<byte> ("SET 7, A", 8, (byte value) => {
+				new Instruction ("SET 7, A", 8, () => {
+					ram.Registers.A = Instruction.Set (1 << 7, ram.Registers.A);
 				}), // 0xFF
 				#endregion
 

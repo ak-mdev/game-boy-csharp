@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace GameBoy.Graphics
 {
@@ -10,11 +11,18 @@ namespace GameBoy.Graphics
 
 		public byte B { get; set; }
 
-		public Color(byte r, byte g, byte b)
+		public byte A { get; set; }
+
+		public Color (byte r, byte g, byte b) : this (r, g, b, 255)
 		{
-			R = r;
+		}
+
+		public Color (byte r, byte g, byte b, byte a) : this()
+		{
+			A = r;
 			G = g;
 			B = b;
+			A = a;
 		}
 	}
 }

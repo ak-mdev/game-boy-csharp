@@ -34,6 +34,8 @@
   <ItemGroup>
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
+    <None Include="Shaders\vertex.glsl" />
+    <None Include="Shaders\fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="OpenTK">
@@ -67,6 +69,7 @@
     <Compile Include="Display\Color.cs" />
     <Compile Include="Display\SpriteOptions.cs" />
     <Compile Include="Debug.cs" />
+    <Compile Include="Display\Shader.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="CPU\" />
@@ -75,5 +78,15 @@
     <Folder Include="Sound\" />
     <Folder Include="Input\" />
     <Folder Include="IO\" />
+    <Folder Include="Shaders\" />
   </ItemGroup>
+  <Target Name="CopyFiles">
+    <Copy
+        SourceFiles="@(MySourceFiles)\Shaders"
+        DestinationFolder="@(MyDestFolder)">
+        <Output
+            TaskParameter="CopiedFiles"
+            ItemName="SuccessfullyCopiedFiles"/>
+     </Copy>
+</Target>
 </Project>
