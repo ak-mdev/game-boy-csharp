@@ -172,7 +172,7 @@ namespace GameBoy.CPU
 					if (ram.IsFlagSet (Flag.Zero)) {
 						cpu.Ticks += 8;
 					} else {
-						ram.Registers.PC += (ushort)((sbyte)value);
+						ram.Registers.PC = (ushort)(ram.Registers.PC + (sbyte)value);
 						cpu.Ticks += 12;
 					}
 				}), //0x20

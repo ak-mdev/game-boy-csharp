@@ -34,7 +34,7 @@ namespace GameBoy.CPU
 			ram.Registers.PC += instruction.Operands;
 
 			var disassembly = string.Copy (instruction.Disassembly);
-			disassembly = disassembly.Replace ("nn", operand.ToString()).Replace ("n", operand.ToString());
+			disassembly = disassembly.Replace ("nn", operand.ToString("X")).Replace ("n", operand.ToString("X"));
 
 			Console.WriteLine (disassembly);
 

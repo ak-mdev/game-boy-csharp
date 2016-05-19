@@ -8,6 +8,12 @@ namespace GameBoy.IO
 
 	public class Rom
 	{
+		private static readonly byte[] NINTENDO_BITS = new byte[] {
+			0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D,
+			0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E, 0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99,
+			0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
+		};
+
 		public event LoadedEventHandler Loaded;
 		public event LoadedEventHandler Cancelled;
 
@@ -21,7 +27,7 @@ namespace GameBoy.IO
 
 		public int RamSize { get; set; }
 
-		public byte[] Cart {get;set;}
+		public byte[] Cart { get; set; }
 
 		public Rom (string file)
 		{
@@ -45,34 +51,21 @@ namespace GameBoy.IO
 		public void Load ()
 		{
 			using (var stream = new FileStream (filename, FileMode.Open)) {
-				if (stream.Length < 0x180) {
+				if (stream.Length < 0x150) {
 					Console.WriteLine ("ROM is too small!");
 					OnLoaded (false, new EventArgs ());
 					return;
 				}
 				stream.Position = 0;
 
-				byte[] header = new byte[0x180];
+				byte[] header = new byte[0x150];
 				stream.Read (header, 0, header.Length);
-				var nameBuilder = new StringBuilder ();
-				for (int i = 0; i < 16; i++) {
-					if (header [i + RomOffsets.NAME] == 0x80 || header [i + RomOffsets.NAME] == 0xc0) {
-						nameBuilder.Append (' ');
-					} else {
-						nameBuilder.Append (header [i + RomOffsets.NAME]);
-					}
-				}
-				Name = nameBuilder.ToString ();
+
+				Console.WriteLine ("{0} the Nintendo Logo test!", CheckNintendoHeader (header) ? "Passes" : "Fails");
+				Name = GetROMName (header);
 				Console.WriteLine ("Internal ROM name: {0}", Name);
 
-				var typeByte = header [RomOffsets.TYPE];
-				if (Enum.IsDefined (typeof(RomType), typeByte)) {
-					Type = (RomType)typeByte;
-				} else {
-					Console.WriteLine ("ERROR: Unknown ROM type: {0}", Type.ToString ());
-					OnLoaded (false, new EventArgs ());
-					return;
-				}
+				Type = GetROMType (header);
 				Console.WriteLine ("ROM type: {0}", Type.ToString ());
 				if (Type != RomType.Plain) {
 					Console.WriteLine ("ERROR: Only 32KB games with no mappers are supported!");
@@ -80,12 +73,7 @@ namespace GameBoy.IO
 					return;
 				}
 
-				RomSize = header [RomOffsets.ROM_SIZE];
-				if ((RomSize & 0xf0) == 0x50) {
-					RomSize = (int)Math.Pow (2.0, (double)(((0x52) & 0xf) + 1)) + 64;
-				} else {
-					RomSize = (int)Math.Pow (2.0, (double)(RomSize + 1));
-				}
+				RomSize = GetROMSize (header);
 				Console.WriteLine ("ROM size: {0}KB", RomSize * 16);
 
 				if (RomSize * 16 != 32) {
@@ -97,10 +85,10 @@ namespace GameBoy.IO
 					return;
 				}
 
-				RamSize = header [RomOffsets.RAM_SIZE];
-				RamSize = (int)Math.Pow (4.0, (double)RamSize) / 2;
+				RamSize = GetRAMSize (header);
 				Console.WriteLine ("RAM size: {0}", RamSize);
-				RamSize = (int)Math.Ceiling (RamSize / 8.0f);
+
+				Console.WriteLine ("{0} the header checksum!", CheckChecksum (header) ? "Passes" : "Fails");
 
 				stream.Position = 0;
 
@@ -109,6 +97,152 @@ namespace GameBoy.IO
 			}
 			OnLoaded (true, new EventArgs ());
 		}
+
+		private string GetROMName (byte[] header)
+		{
+			var nameBuilder = new StringBuilder ();
+			for (int i = 0; i < 16; i++) {
+				if (header [i + RomOffsets.NAME] == 0x80 || header [i + RomOffsets.NAME] == 0xc0) {
+					nameBuilder.Append (' ');
+				} else {
+					nameBuilder.Append (Convert.ToChar (header [i + RomOffsets.NAME]));
+				}
+			}
+			return nameBuilder.ToString ();
+		}
+
+		private RomType GetROMType (byte[] header)
+		{
+			var typeByte = header [RomOffsets.TYPE];
+			if (Enum.IsDefined (typeof(RomType), typeByte)) {
+				return (RomType)typeByte;
+			} else {
+				Console.WriteLine ("ERROR: Unknown ROM type: {0}", Type.ToString ());
+				OnLoaded (false, new EventArgs ());
+				return RomType.Invalid;
+			}
+		}
+
+		private int GetROMSize (byte[] header)
+		{
+			var romSize = (int)header [RomOffsets.ROM_SIZE];
+			if ((RomSize & 0xf0) == 0x50) {
+				romSize = (int)Math.Pow (2.0, (double)(((0x52) & 0xf) + 1)) + 64;
+			} else {
+				romSize = (int)Math.Pow (2.0, (double)(RomSize + 1));
+			}
+			return romSize;
+		}
+
+		private int GetRAMSize (byte[] header)
+		{
+			var ramSize = (int)header [RomOffsets.RAM_SIZE];
+			ramSize = (int)Math.Pow (4.0, (double)RamSize) / 2;
+			ramSize = (int)Math.Ceiling (RamSize / 8.0f);
+			return ramSize;
+		}
+
+		private bool CheckNintendoHeader (byte[] header)
+		{
+			for (int i = 0; i < NINTENDO_BITS.Length; i++) {
+				if (header [i + RomOffsets.NINTENDO] != NINTENDO_BITS [i]) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private bool CheckChecksum (byte[] header)
+		{
+			var checksum = header [RomOffsets.CHECKSUM];
+
+			ushort x = 0;
+			var max = RomOffsets.CHECKSUM - 1;
+			for (var i = 0x134; i < max; i++) {
+				x = (ushort)(x - header [i] - 1);
+			}
+			Console.WriteLine ("x={0};checksum={1}", x, checksum);
+			return (checksum == x);
+		}
 	}
 }
 
+/*
+
+  FILE *f;
+  size_t length;
+  
+  unsigned char header[0x180];
+  
+  f = fopen(filename, "rb");
+  if(!f) return 0;
+  
+  fseek(f, 0, SEEK_END);
+  length = ftell(f);
+  if(length < 0x180) {
+    printf("ROM is too small!\n");
+    fclose(f);
+    return 0;
+  }
+  
+  rewind(f);
+  fread(header, 0x180, 1, f);
+  
+  memset(name, '\0', 17);
+  for(i = 0; i < 16; i++) {
+    if(header[i + ROM_OFFSET_NAME] == 0x80 || header[i + ROM_OFFSET_NAME] == 0xc0) name[i] = '\0';
+    else name[i] = header[i + ROM_OFFSET_NAME];
+  }
+  
+  printf("Internal ROM name: %s\n", name);
+  
+  type = header[ROM_OFFSET_TYPE];
+  
+  if(!romTypeString[type]) {
+    printf("Unknown ROM type: %#02x\n", type);
+    fclose(f);
+    return 0;
+  }
+  
+  printf("ROM type: %s\n", romTypeString[type]);
+  
+  if(type != ROM_PLAIN) {
+    printf("Only 32KB games with no mappers are supported!\n");
+    fclose(f);
+    return 0;
+  }
+  
+  romSize = header[ROM_OFFSET_ROM_SIZE];
+  
+    if((romSize & 0xF0) == 0x50) romSize = (int)pow(2.0, (double)(((0x52) & 0xF) + 1)) + 64;
+    else romSize = (int)pow(2.0, (double)(romSize + 1));
+  
+  printf("ROM size: %dKB\n", romSize * 16);
+  
+  if(romSize * 16 != 32) {
+    printf("Only 32KB games with no mappers are supported!\n");
+    fclose(f);
+    return 0;
+  }
+  
+  if(length != romSize * 16 * 1024) {
+    printf("ROM filesize does not equal ROM size!\n");
+    //fclose(f);
+    //return 0;
+  }
+  
+  ramSize = header[ROM_OFFSET_RAM_SIZE];
+  
+    ramSize = (int)pow(4.0, (double)(ramSize)) / 2;
+  
+  printf("RAM size: %dKB\n", ramSize);
+  
+  ramSize = ceil(ramSize / 8.0f);
+
+rewind(f);
+fread(cart, length, 1, f);
+
+fclose(f);
+
+return 1;
+ */

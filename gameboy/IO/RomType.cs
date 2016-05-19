@@ -4,6 +4,7 @@ namespace GameBoy.IO
 {
 	public enum RomType : byte
 	{
+		Invalid = 0xdb,
 		Plain = 0x00,
 		Mbc1 = 0x01,
 		Mbc1Ram = 0x02,
